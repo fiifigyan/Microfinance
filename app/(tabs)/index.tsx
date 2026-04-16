@@ -1,98 +1,408 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [refreshing, setRefreshing] = useState(false);
+  const accounts = useQuery(api.queries.accounts.getAccounts);
+  const recentTransactions = useQuery(api.queries.accounts.getRecentTransactions);
+  const seedDatabase = useMutation(api.init.seedDatabase);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const defaultAccount = accounts?.[0];
+  const totalBalance = accounts?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Queries will automatically refetch
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const handleSeedData = async () => {
+    try {
+      await seedDatabase();
+      alert("Test data created successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create test data");
+    }
+  };
+
+  return (
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {/* Balance Card */}
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Total Balance</Text>
+        <Text style={styles.balanceAmount}>GHS {totalBalance.toFixed(2)}</Text>
+        {defaultAccount && (
+          <Text style={styles.accountNumber}>
+            Account: {defaultAccount.accountNumber}
+          </Text>
+        )}
+      </View>
+
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push("/transaction/deposit")}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#DCFCE7" }]}>
+            <Ionicons name="arrow-down" size={24} color="#10B981" />
+          </View>
+          <Text style={styles.actionText}>Deposit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push("/transaction/withdraw")}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
+            <Ionicons name="arrow-up" size={24} color="#EF4444" />
+          </View>
+          <Text style={styles.actionText}>Withdraw</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push("/transaction/transfer")}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#EFF6FF" }]}>
+            <Ionicons name="swap-horizontal" size={24} color="#2563EB" />
+          </View>
+          <Text style={styles.actionText}>Transfer</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push("/loans/apply")}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
+            <Ionicons name="document-text-outline" size={24} color="#D97706" />
+          </View>
+          <Text style={styles.actionText}>Apply Loan</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Accounts Summary */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Your Accounts</Text>
+          <TouchableOpacity onPress={() => router.push("/accounts")}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {accounts?.slice(0, 2).map((account) => (
+          <TouchableOpacity 
+            key={account._id} 
+            style={styles.accountCard}
+            onPress={() => router.push(`/account/${account._id}`)}
+          >
+            <View style={styles.accountInfo}>
+              <View style={styles.accountTypeIcon}>
+                <Ionicons name="wallet" size={20} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={styles.accountType}>{account.type}</Text>
+                <Text style={styles.accountNumberSmall}>{account.accountNumber}</Text>
+              </View>
+            </View>
+            <Text style={styles.accountBalance}>GHS {account.balance.toFixed(2)}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Recent Transactions */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <TouchableOpacity onPress={() => router.push("/transactions")}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {recentTransactions?.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="receipt-outline" size={48} color="#D1D5DB" />
+            <Text style={styles.emptyStateText}>No transactions yet</Text>
+            <TouchableOpacity 
+              style={styles.seedButton}
+              onPress={handleSeedData}
+            >
+              <Text style={styles.seedButtonText}>Create Test Data</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          recentTransactions?.slice(0, 5).map((transaction) => (
+            <TransactionItem key={transaction._id} transaction={transaction} />
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+function TransactionItem({ transaction }: { transaction: any }) {
+  const isDeposit = transaction.type === "DEPOSIT";
+  
+  return (
+    <TouchableOpacity 
+      style={styles.transactionItem}
+      onPress={() => router.push(`/transaction/${transaction._id}`)}
+    >
+      <View style={styles.transactionLeft}>
+        <View style={[
+          styles.transactionIcon,
+          isDeposit ? styles.depositIcon : styles.withdrawalIcon
+        ]}>
+          <Ionicons 
+            name={isDeposit ? "arrow-down" : "arrow-up"} 
+            size={16} 
+            color={isDeposit ? "#10B981" : "#EF4444"} 
+          />
+        </View>
+        <View>
+          <Text style={styles.transactionTitle}>
+            {transaction.description || transaction.type}
+          </Text>
+          <Text style={styles.transactionMethod}>{transaction.method}</Text>
+          <Text style={styles.transactionDate}>
+            {new Date(transaction.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.transactionRight}>
+        <Text style={[
+          styles.transactionAmount,
+          isDeposit ? styles.depositAmount : styles.withdrawalAmount
+        ]}>
+          {isDeposit ? "+" : "-"} GHS {transaction.amount.toFixed(2)}
+        </Text>
+        <View style={[
+          styles.statusBadge,
+          transaction.status === "COMPLETED" ? styles.statusCompleted : styles.statusPending
+        ]}>
+          <Text style={styles.statusText}>{transaction.status}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
   },
-  stepContainer: {
-    gap: 8,
+  balanceCard: {
+    backgroundColor: "#2563EB",
+    margin: 16,
+    padding: 20,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  balanceLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  balanceAmount: {
+    color: "#FFFFFF",
+    fontSize: 36,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  accountNumber: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    opacity: 0.8,
+    marginTop: 8,
+  },
+  quickActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  actionButton: {
+    alignItems: "center",
+  },
+  actionIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  actionText: {
+    fontSize: 12,
+    color: "#4B5563",
+    fontWeight: "500",
+  },
+  section: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  seeAll: {
+    fontSize: 14,
+    color: "#2563EB",
+    fontWeight: "500",
+  },
+  accountCard: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  accountInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  accountTypeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  accountType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  accountNumberSmall: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  accountBalance: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  emptyState: {
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyStateText: {
+    color: "#6B7280",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  seedButton: {
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  seedButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  transactionItem: {
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  transactionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  transactionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  depositIcon: {
+    backgroundColor: "#DCFCE7",
+  },
+  withdrawalIcon: {
+    backgroundColor: "#FEE2E2",
+  },
+  transactionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  transactionMethod: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  transactionDate: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  transactionRight: {
+    alignItems: "flex-end",
+  },
+  transactionAmount: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  depositAmount: {
+    color: "#10B981",
+  },
+  withdrawalAmount: {
+    color: "#EF4444",
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginTop: 4,
+  },
+  statusCompleted: {
+    backgroundColor: "#DCFCE7",
+  },
+  statusPending: {
+    backgroundColor: "#FEF3C7",
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "600",
   },
 });
