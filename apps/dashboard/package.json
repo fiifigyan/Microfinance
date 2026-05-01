@@ -12,14 +12,14 @@
     "@clerk/clerk-react": "^5.25.5",
     "convex": "^1.35.1",
     "lucide-react": "^0.469.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-router-dom": "^6.28.2"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
