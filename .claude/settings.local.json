@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(mkdir -p /c/Users/Fiifi/Desktop/Microfinance/apps/mobile)",
+      "Bash(mkdir -p /c/Users/Fiifi/Desktop/Microfinance/apps/dashboard)",
+      "Bash(mv app *)",
+      "Bash(mv app.json apps/mobile/)",
+      "Bash(mv assets *)",
+      "Bash(mv components *)",
+      "Bash(mv constants *)",
+      "Bash(cp *)",
+      "Bash(cp -r assets apps/mobile/)",
+      "Bash(cp app.json apps/mobile/)",
+      "Bash(cp -r components apps/mobile/)",
+      "Bash(cp -r constants apps/mobile/)",
+      "Bash(cp -r hooks apps/mobile/)",
+      "Bash(cp -r dashboard/src apps/dashboard/)",
+      "Bash(cp dashboard/index.html apps/dashboard/)",
+      "Bash(cp dashboard/package.json apps/dashboard/)",
+      "Bash(cp dashboard/postcss.config.js apps/dashboard/)",
+      "Bash(cp dashboard/tailwind.config.js apps/dashboard/)",
+      "Bash(xargs sed *)"
+    ]
+  }
+}

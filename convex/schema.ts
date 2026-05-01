@@ -6,7 +6,7 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.optional(v.string()),
     email: v.string(),
-    phone: v.string(),
+    phone: v.optional(v.string()),
     firstName: v.string(),
     lastName: v.string(),
     isVerified: v.boolean(),
@@ -15,6 +15,7 @@ export default defineSchema({
       v.literal("AGENT"),
       v.literal("ADMIN"),
     ),
+    pushToken: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_clerkId", ["clerkId"])
@@ -109,6 +110,42 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_loanNumber", ["loanNumber"]),
 
+  // Notifications table
+  notifications: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    body: v.string(),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_read", ["userId", "read"]),
+
+  // KYC documents table
+  kycDocuments: defineTable({
+    userId: v.id("users"),
+    documentType: v.union(
+      v.literal("NATIONAL_ID"),
+      v.literal("PASSPORT"),
+      v.literal("DRIVERS_LICENSE"),
+      v.literal("VOTERS_CARD"),
+    ),
+    documentNumber: v.string(),
+    fullName: v.string(),
+    dateOfBirth: v.string(),
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("APPROVED"),
+      v.literal("REJECTED"),
+    ),
+    reviewedBy: v.optional(v.id("users")),
+    reviewNote: v.optional(v.string()),
+    submittedAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"]),
+
   // Loan Repayments table
   loanRepayments: defineTable({
     loanId: v.id("loans"),
@@ -136,5 +173,6 @@ export default defineSchema({
   })
     .index("by_loanId", ["loanId"])
     .index("by_userId", ["userId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_reference", ["reference"]),
 });

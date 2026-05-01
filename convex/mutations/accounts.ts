@@ -3,7 +3,6 @@ import { v } from "convex/values";
 
 export const createAccount = mutation({
   args: {
-    userId: v.id("users"),
     type: v.union(
       v.literal("SAVINGS"),
       v.literal("CURRENT"),
@@ -11,11 +10,21 @@ export const createAccount = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
     const accountNumber = `ASA${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000)}`;
 
     const accountId = await ctx.db.insert("accounts", {
       accountNumber,
-      userId: args.userId,
+      userId: user._id,
       type: args.type,
       balance: 0,
       currency: "GHS",

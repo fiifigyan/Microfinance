@@ -1,0 +1,17 @@
+# EAS Build ignore patterns
+
+# Exclude directories that cause issues with symlinks on Windows
+
+.agents/
+.claude/
+.git/
+.github/
+node_modules/
+.expo/
+dist/
+build/
+ios/
+android/
+.DS_Store
+\*.log
+.env.local
