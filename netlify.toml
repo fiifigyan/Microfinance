@@ -1,7 +1,6 @@
 [build]
-  base = "apps/dashboard"
-  command = "npm run build"
-  publish = "dist"
+  command = "npx convex codegen && npm run build --workspace=apps/dashboard"
+  publish = "apps/dashboard/dist"
 
 [[redirects]]
   from = "/*"
